@@ -1,0 +1,270 @@
+---
+title: "Tarea 1 Genómica Funcional 2023"
+author: "Jose Raul Martinez Vega"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document: 
+    fig_height: 8
+    fig_width: 13
+    number_section: yes
+    theme: cerulean
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+  pdf_document:
+    toc: yes
+  word_document:
+    toc: yes
+  html_notebook: 
+    number_sections: yes
+    toc: yes
+#bibliography: biblio.bib
+#csl: nature.csl
+#runtime: shiny
+#output: flexdashboard::flex_dashboard
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Tarea 1
+
+## (20 %) Preguntas rápidas (simples)
+
+1.  Considera una red de 10 nodos . Considera que tienes una sola conexión. ¿Cuál es el número máximo de nodos que puedes conectar? Dado un solo nodo , ¿cuál es el número máximo conexiones que puede tener tal nodo? R: Teniendo una red de 10 nodos con 1 que se en encuentre en el centro, se pueden conectar 9 nodos al ese centro por ende se tendrian 9 conexiones del nodo central.
+
+2.  Considera una red dirigida de 10 nodos. Usa 25 conexiones y dibuja una red con ese número de nodos y conexiones dirigidas. Calcula la distribución de conectividades de salida.Calcula el número total de conexiones de salida ¿Cómo se compara el número total de de conectividades de entrada (son iguales, diferentes)? Explica tu respuesta. Calcula el promedio de entrada y de salida. Discute tu resultado.
+
+```{r}
+library(igraph)
+r10 <- make_empty_graph(10, directed=T)
+r10
+
+plot(r10)
+
+r10<-add.edges(r10, c(1,3, 1,6, 2,4, 3,8, 4,9, 5,10, 6,1, 7,4, 8,7, 9,2, 10,3, 7,4, 5,6, 1,10, 9,3, 9,10, 4,1, 7,10, 8,6, 6,3, 5,9, 4,9, 4,3, 1,7, 2,8))
+r10
+
+plot(r10)
+
+r10in<- degree(r10, mode = "in") #Degre de las entradas
+length(r10in)
+mean(r10in)
+hist(r10in)
+
+
+r10out<- degree(r10, mode = "out") #degree salidas
+length(r10out)
+mean(r10out)
+hist(r10out)
+```
+
+R:Al observar el degree distribution, se observa que hay cambios respecto a las entradas y las salidas y esto se de debe a que entre los nodos no se encuentra las misms conexiones ya sea de entrada o de salida.
+
+3.  Considera una red no dirigida de $n=3,4,5,6$ nodos respectivamente. ¿Cuál es el número máximo de conexiones que puedes poner? Dibuja cada caso. ¿Qué pasa si la red es dirigida?R: si la red es dirigida tenemos conexiones que entran y salen dando lugar a que estas se dupliquen.
+
+    ![](images/WhatsApp%20Image%202023-03-07%20at%2010.54.39%20PM(1).jpeg)
+
+    ![](images/WhatsApp%20Image%202023-03-07%20at%2010.54.39%20PM-01.jpeg)
+
+4.  Considera tu red de amigos reales.¿ Cuál es tu coeficiente de clusterización?
+
+## (80 % ) Scripts, código, texto y gráficas
+
+1.  **Karate**
+
+Considera la red del club de Karate de Zachary. [Acá](https://en.wikipedia.org/wiki/Zachary%27s_karate_club) puedes leer sobre eso. En igraph la gráfica está precargada
+
+```{r message=FALSE, warning=FALSE}
+library(igraph)
+karate<-make_graph("Zachary")
+plot(karate)
+```
+
+-   ¿Cuántos nodos y conexiones tiene?
+
+```{r}
+karate
+```
+
+R:Se observan 34 nodos y 78 conexiones
+
+-   ¿Quiénes son los nodos y cuál es la regla de conexión? R:Los nodos son los estudiantes y la regla va de como se llevan fuera de del club.
+
+-   ¿Qué tan densa es la red?
+
+```{r}
+graph.density(karate)
+```
+
+R:poco densa
+
+-   ¿Cómo obtienes la matriz de adyacencia?
+
+```{r}
+get.adjacency(karate)
+```
+
+-   ¿Es una red dirigida, pesada? R: es no dirigida y sin peso, se ve por los valores de la matriz.
+
+-   Calcula y gráfica la distribución de conectividades
+
+```{r}
+hist(degree(karate))
+```
+
+-   Calcula el diámetro, la matriz de distancias y la distancia promedio
+
+```{r}
+diameter(karate)
+distances(karate)
+mean_distance(karate)
+```
+
+-   Encuentra la trayectoria de los nodos más alejados.
+
+-   Existen nodos con coefeiciente de clusterización 1. ¿Qué significa?
+```{r}
+p<- sort(degree(karate), decreasing = T)
+transitivity(karate, type="local")[p]
+```
+R: Si se encuentran algunos nodos que poseen un indice de 1, esto quiere decir que los nodos en este caso los estudiantes vecinos de algun nodo estan conectados entre si.
+
+-   Mide , con al menos tres medidas de centralidad, los nodos más importantes. **Explica e interpreta tus resultados**.
+
+```{r}
+degree(karate)
+closeness(karate)
+betweenness(karate)
+```
+
+R: Se tienen varios metodos para detectar la centralidad, en el primero nos vasamos en las conexiones que tiene y con ello se pueden ver que los que tienen un mayor degree son los mas importantes. Para el caso de closeness este nos da el promedio de las distancias entre nodos. Para betweenes es para ver la cantidad de veces que un nodo este en los caminos pas cortos y su tu medida es mas grande quiere decir que estos son los mas centrales.
+
+2.  **Amigues**
+
+A partir de la red de amigues que vimos en clase, en su versión no ponderada, contesta lo siguiente:
+
+-   Escribe una función que calcule el número de amigos que tiene cualquier persona arbitraria y lo compare con el número de los amigos de estos.
+-   Escribe una función que te de la trayectoria más larga entre dos nodos arbitrarios de la red.
+-   Enceuntra las dos personas más populares.
+
+3.  **Red PPI**
+
+A partir de la red de interacción proteína-proteína (PPI) de la levadura que se encuentra en la bilbioteca `igraphdata` Elabora un script que conteste lo siguiente:
+
+```{r}
+library(igraphdata)
+data("yeast")
+yeast
+```
+
+-   Encuentre qué tipo de distribución de conectividades tiene. Haz un ajuste en log-log para ver que tipo de distribución podría ser.
+
+```{r}
+hist(log(log(degree(yeast))),main="Distribución de conectividades log-log", xlab= "Degree distribution",)
+```
+
+-   Encuentra las diez proteínas más conectadas
+
+```{r}
+names(sort(degree(yeast), decreasing=TRUE) [1:10])
+```
+
+-   Calcula el diámetro y promedio de las distancias
+
+```{r}
+diameter(yeast)
+mean_distance(yeast)
+```
+
+-   Crea una función que, a partir de eliminar al azar un noodo de la red genere el promedio de las distancias después de eliminar $n=1,2,3,\ldots, 100$ nodos al azar
+
+```{r}
+del_v<- function(red, nodos){
+  for (x in 1:nodos){    #al poner solo nodos nos da la posibilidad de hacerlo para las proteinas que querramos
+    p<- delete.vertices(red, c(sample(1:length(V(red)),1))) 
+    print(paste("promedio distancias", x, "es", mean_distance(p)))
+    red_v<-p
+  }
+}
+del_v(yeast, 10) #aqui nada esta para 10 
+```
+
+-   Crea una función que elimine las proteínas más conectadas y calcule el promedio de las distancias cad vez que se remueve un nodo.
+
+```{r}
+dele_pro<-function (ptn){
+  for( x in 1:10){
+    g<- delete.vertices(ptn, c(sort(degree (ptn), decreasing =TRUE) [1:10]))
+    print(paste("Promedio de distancia eliminando el nodo",x, "más conectado", mean_distance(g)))
+    ptn<-g
+  }
+}
+dele_pro(yeast)
+
+```
+
+-   Calcula el proemdio del coeficiente de clusterización. ¿Hay proteínas que tengan un coeficiente de clusterización de 1? Eso qué significa.
+
+```{r}
+d<- sort(degree(yeast), decreasing = T)
+transitivity(yeast, type="local")[d][1:20]
+transitivity(yeast)
+```
+
+Discute tus resultados.
+R:Aqui vemos con la transitividad que la red no esta compleamente conectado, sin embargo si se observa que algunas proteinas tienen un indice de clusteririzacion de 1, haciendo referencia que las proteinas vecinas de esta estan conectadas entre si, dando lugar a cluster entre ellas. 
+
+4.  Redes biológicas
+
+Ve a al [Network Repository](https://networkrepository.com/bn-mouse-visual-cortex-1.php) y descarga la red en formato lista de adyacencia. Explica que representam los nodos y las conectividades.
+
+Escribe código que resuelva lo siguiente:
+
+-   Cargue y genere una gráfica en `igraph`.
+
+```{r}
+mvc<- read.table("ejemplo/bn-mouse_visual-cortex_1.edges")
+mvc<- graph_from_data_frame(mvc, directed = F)
+mvc
+plot(mvc)
+```
+
+-   Genera la gráfica con todos los layouts disponibles.
+
+```{r}
+plot(mvc, layout=layout_on_grid(mvc), vertex.size=20, edge.arrow.size=1)
+plot(mvc, layout=layout_on_grid(mvc), vertex.size=20, edge.arrow.size=1)
+plot(mvc, layout=layout.circle(mvc), vertex.size=20, edge.arrow.size=1)
+plot(mvc, layout=layout_as_star(mvc), vertex.size=20, edge.arrow.size=1)
+plot(mvc, layout=layout_with_mds(mvc), vertex.size=10, edge.arrow.size=1)
+plot(mvc, layout=layout.fruchterman.reingold(mvc), vertex.size=15, edge.arrow.size=1)
+plot(mvc, layout=layout.gem(mvc), vertex.size=20, edge.arrow.size=1)
+```
+
+-   Grafica la red con al menos tres medidas de centralidad.
+
+```{r}
+degree(mvc)
+hist(degree(mvc), main = "Centralidad degree")
+closeness(mvc)
+hist(closeness(mvc), main = "centralidad closeness")
+betweenness(mvc)
+hist(betweenness(mvc), main = "centralidad betweenness")
+```
+
+-   ¿Qué tan densa es la red? R:No tan densa, se ve que los nodos no estan todos conectados entre si,
+
+-   Clusteriza la red con al menos tres métodos de clusterización. Gráfica la red con esos métodos.
+
+```{r}
+plot(infomap.community(mvc), mvc, edge.arrow.width = 2, edge.arrow.size = 0.1)
+plot(edge.betweenness.community(mvc), mvc, edge.arrow.width = 2, edge.arrow.size = 0.1)
+plot(label.propagation.community(mvc),mvc, edge.arrow.width = 2, edge.arrow.size = 0.1)
+```
+
+Explica tus resultados. R: Utilizando los metodos en los primeros se observan cuatro clusters mientras que con el ultimo se observan se observan 5, algo curioso es que cada que corria este metodo resultaba ser diferente, en algunos casos 3 y en otros casos hasta 7.
